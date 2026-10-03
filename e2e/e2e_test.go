@@ -173,6 +173,7 @@ func TestInteractiveCompletion(t *testing.T) {
 		t.Fatal(err)
 	}
 	waitOutputAfter(t, ctx, getOutput, start, "TWIG_HISTORY\r\n")
+	waitOutputAfter(t, ctx, getOutput, start, "\x1b[?2004h")
 	start = len(getOutput())
 	if _, err := io.WriteString(stdin, "\x1b[A"); err != nil {
 		t.Fatal(err)
