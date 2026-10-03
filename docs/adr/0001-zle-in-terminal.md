@@ -1,3 +1,3 @@
-# 候補表示に zsh ZLE を使う
+# Use zsh ZLE to display suggestions in the terminal
 
-Twig は候補を別ウィンドウではなく、zsh ZLE を通じてターミナル内に表示する。入力バッファとキー操作を zsh 上で扱えるため、端末ごとの画面位置取得や専用連携を必要としない。この選択により Twig は対話 zsh に依存し、表示には ZLE の制約がある。
+Twig displays suggestions inside the terminal through zsh ZLE instead of opening a separate window. ZLE provides access to the editing buffer and key bindings without terminal-specific screen positioning or integration. This choice makes Twig depend on interactive zsh and subjects its display to ZLE's limitations.

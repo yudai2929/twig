@@ -1,6 +1,6 @@
-# 開発資料
+# Development documentation
 
-- [開発とテスト](DEVELOPMENT.md): ビルド、テスト、候補取得の確認方法
-- [設計](DESIGN.md): 現在の候補取得と表示の仕組み
-- [用語](CONTEXT.md): Twig で使う言葉の定義
-- [設計判断](adr/0001-zle-in-terminal.md): ターミナル内の表示に ZLE を採用した理由
+- [Development and testing](DEVELOPMENT.md): Build, test, and inspect completion results
+- [Design](DESIGN.md): How suggestions are collected and displayed
+- [Terminology](CONTEXT.md): Terms used in Twig
+- [Architecture decision](adr/0001-zle-in-terminal.md): Why Twig uses ZLE for terminal display

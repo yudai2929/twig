@@ -1,14 +1,9 @@
-# Twig の用語
+# Twig terminology
 
-Twig の対話補完で使う言葉を定義します。
+This document defines terms used for Twig's interactive completion.
 
-## Language
+**Completion:** Suggestions for continuing the command line at the cursor while the user is editing it. This does not include actions suggested after a command runs.
 
-**補完**:
-利用者が編集中のコマンドラインについて、カーソル位置から入力を続けるための候補を示すこと。コマンド実行後の操作提案は含まない。
+**Completion candidate:** An item the user can select to continue the current command line.
 
-**補完候補**:
-利用者が現在の入力に対して選択できる、コマンドラインの続きを表す項目。
-
-**候補の確定**:
-選択した補完候補を編集中のコマンドラインへ挿入すること。コマンドの実行とは別の操作。
+**Accepting a candidate:** Inserting the selected candidate into the command line being edited. This is separate from executing the command.

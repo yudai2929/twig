@@ -1,26 +1,26 @@
-# Twig の設計
+# Twig design
 
-Twig は macOS の対話 zsh 上で動作します。入力と表示は ZLE、候補取得は Go の実行ファイルが担当します。
+Twig runs in interactive zsh on macOS. ZLE handles input and display; the Go executable collects suggestions.
 
-## 入力と表示
+## Input and display
 
-`zsh/twig.zsh` は編集中のバッファとカーソル位置を監視し、候補をターミナル内に表示します。候補取得は別プロセスで行うため、取得中も入力できます。入力が変わった後に届いた古い結果は、世代番号で判定して破棄します。同じ候補を繰り返し描画せず、既存の候補を絞れるときは再取得を省きます。
+`zsh/twig.zsh` watches the editing buffer and cursor position and displays suggestions inside the terminal. Suggestion collection runs in a separate process so typing remains responsive while a request is in progress. A generation number discards results for older input. Twig avoids redrawing unchanged suggestions and filters existing results when it can.
 
-Enter は表示中の候補を入力し、候補がないときはコマンドを実行します。Tab は zsh 本来の補完を呼びます。上下矢印は履歴操作に残し、候補の移動には `Ctrl-X j` / `Ctrl-X k` を使います。
+Enter inserts the selected suggestion or runs the command when no suggestions are open. Tab invokes zsh's standard completion. The up and down arrows remain available for command history; `Ctrl-X j` and `Ctrl-X k` move through suggestions.
 
-## 候補取得
+## Collecting suggestions
 
-`internal/collector/` は次の順序で候補を探します。
+`internal/collector/` searches in this order:
 
-1. 最初の単語では、現在の `PATH` にある実行可能ファイルを探す。zsh 補完定義があるコマンドを先に並べる。
-2. 引数以降では、隔離した対話 zsh の `list-choices` を実行し、`compadd` に渡された候補を記録する。
-3. zsh 補完定義がない CLI で、ヘルプに補完生成コマンドが案内されていれば、生成した zsh 補完を読み込む。
-4. 候補を取得できなければ、CLI の `--help` にあるコマンドとオプションを解析する。CLI が `help` の参照先を示す場合は、そのページも読む。
+1. For the first word, find executables on the current `PATH` and rank commands with zsh completion definitions first.
+2. For arguments, run `list-choices` in an isolated interactive zsh and record candidates passed to `compadd`.
+3. If a CLI has no zsh completion definition but its help describes a completion generator, load its generated zsh completion.
+4. If no candidates are found, parse commands and options from the CLI's `--help` output. Follow a referenced `help` page when the CLI points to one.
 
-既存の zsh 補完が使える場合はその候補順を保ちます。コマンド名ごとの固定リストは持ちません。
+Twig keeps the candidate order from existing zsh completions when possible. It has no fixed lists for individual commands.
 
-## 境界
+## Limits
 
-候補取得用の zsh は `zsh -f` で起動します。補完パスにある定義は使えますが、利用中のシェルだけに読み込まれた関数や変数は共有できません。zsh の候補を構造化して一括取得する API はないため、`compadd` の呼び出しを観測しています。補完定義によっては、説明、接尾辞、引用、順序が標準補完と一致しないことがあります。Tab は利用中のシェルの標準補完を使います。
+The collector starts zsh with `zsh -f`. It can use definitions on the completion path but cannot share functions or variables loaded only in the user's current shell. zsh has no API for retrieving all candidates as structured data, so Twig observes calls to `compadd`. Descriptions, suffixes, quoting, or order may differ from standard completion for some definitions. Tab always uses the current shell's standard completion.
 
-Twig 自体は入力内容を外部サービスへ送信しません。ただし、CLI の補完生成や既存の zsh 補完が外部コマンドや通信を実行する場合は、その処理も候補取得時に動きます。コマンド単位で自動補完を無効化できます。
+Twig does not send the command line to an external service. However, existing zsh completions and CLI completion generators may run external commands or make network requests during collection. Automatic suggestions can be disabled per command.

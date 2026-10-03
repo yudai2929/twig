@@ -1,36 +1,36 @@
-# 開発とテスト
+# Development and testing
 
-## 開発環境
+## Development environment
 
-Go のバージョンはルートの `mise.toml` で指定します。Go の外部ライブラリは使っていません。
+The root `mise.toml` specifies the Go version. Twig has no external Go libraries.
 
 ```sh
 mise install
 mise exec -- go build -o ./bin/twig ./cmd/twig
 ```
 
-利用者向けのインストールは [README](../README.md) に記載しています。配布用バイナリには zsh プラグインが埋め込まれており、`twig enable` が `${XDG_DATA_HOME:-$HOME/.local/share}/twig/twig.zsh` に展開します。開発中のビルドを現在の対話 zsh で試す場合は、ビルド後に `eval "$(./bin/twig enable --shell)"` を実行してください。
+User installation instructions are in the [README](../README.md). The release binary embeds the zsh plugin; `twig enable` extracts it to `${XDG_DATA_HOME:-$HOME/.local/share}/twig/twig.zsh`. To try a development build in the current interactive zsh, run `eval "$(./bin/twig enable --shell)"` after building.
 
-## テスト
+## Tests
 
 ```sh
-mise exec -- go test ./...
-mise exec -- go test -race ./...
+mise exec -- go test -p 1 ./...
+mise exec -- go test -race -p 1 ./...
 mise exec -- go vet ./...
 ```
 
-`e2e` テストは macOS の PTY で対話 zsh を起動し、候補の表示、選択、実行、Tab、Space、ファイル名の引用、候補入力後の再表示を確認します。
+The `e2e` tests start interactive zsh through a macOS PTY. They check suggestion display, selection, execution, Tab, Space, file-name quoting, and suggestions after accepting a candidate.
 
-候補取得だけを確認する場合は次を実行します。
+To inspect only the collector output:
 
 ```sh
 ./bin/twig complete --buffer 'git c' --json
 ```
 
-## 実装の場所
+## Code map
 
-- `zsh/twig.zsh`: 入力の監視、候補表示、キー操作
-- `internal/collector/`: 候補取得、zsh 補完の観測、ヘルプ解析
-- `internal/completion/`: 候補データのエンコードとフィルタリング
-- `internal/setup/`: zsh 設定への有効化・無効化の反映
-- `e2e/`: 対話 zsh を使う結合テスト
+- `zsh/twig.zsh`: Input monitoring, suggestion display, and key bindings
+- `internal/collector/`: Candidate collection, observing zsh completion, and parsing help text
+- `internal/completion/`: Encoding and filtering candidates
+- `internal/setup/`: Enabling and disabling Twig in zsh configuration
+- `e2e/`: Integration tests with interactive zsh
