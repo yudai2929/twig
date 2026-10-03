@@ -219,13 +219,30 @@ function _twig_space() {
   zle .self-insert
 }
 
+function _twig_after_history() {
+  _twig_values=()
+  _twig_descriptions=()
+  _twig_suffixes=()
+  _twig_kinds=()
+  _twig_index=1
+  _twig_suppressed=1
+  _twig_skip_next_space=0
+  _twig_last_buffer="$BUFFER"
+  _twig_last_cursor=$CURSOR
+  (( _twig_revision++ ))
+  print -r -- "$_twig_revision" > "$_twig_generation_file"
+  _twig_draw
+}
+
 function _twig_up() {
   if (( $#_twig_values && ! _twig_suppressed )); then
     (( _twig_index > 1 )) && (( _twig_index-- ))
     _twig_draw
     return
   fi
+  local previous_buffer="$BUFFER"
   zle .up-line-or-history
+  [[ "$BUFFER" != "$previous_buffer" ]] && _twig_after_history
 }
 
 function _twig_down() {
@@ -234,7 +251,9 @@ function _twig_down() {
     _twig_draw
     return
   fi
+  local previous_buffer="$BUFFER"
   zle .down-line-or-history
+  [[ "$BUFFER" != "$previous_buffer" ]] && _twig_after_history
 }
 
 function _twig_escape() {

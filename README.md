@@ -33,6 +33,7 @@ eval "$(twig enable --shell)"
 ## Use
 
 Type `git c`, `go mod t`, or `codex ex` to see suggestions automatically.
+Run `twig help` to see commands and keyboard controls.
 
 - `Down` / `Up`: Move through suggestions while they are open; otherwise browse command history
 - `Ctrl-X j` / `Ctrl-X k`: Move through suggestions
@@ -41,6 +42,7 @@ Type `git c`, `go mod t`, or `codex ex` to see suggestions automatically.
 - `Tab`: Use zsh's standard completion
 
 After inserting a suggestion, Twig shows further suggestions when available. To run a command without selecting a suggestion, press `Esc` and then `Enter`.
+Suggestions stay hidden after browsing history until you edit the line or move the cursor.
 
 Suggestion icons show the kind of item: `⚙` command or subcommand, `⚑` flag, `📄` file, `📁` directory, and `•` other value.
 
