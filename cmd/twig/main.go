@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,10 +20,17 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		usage()
-		os.Exit(2)
+		printHelp(os.Stdout)
+		return
 	}
 	switch os.Args[1] {
+	case "help", "--help", "-h":
+		if len(os.Args) != 2 {
+			usage()
+			os.Exit(2)
+		}
+		printHelp(os.Stdout)
+		return
 	case "enable":
 		if len(os.Args) != 2 && !(len(os.Args) == 3 && os.Args[2] == "--shell") {
 			usage()
@@ -52,7 +60,33 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: twig enable [--shell] | disable | complete --buffer TEXT --cursor N [--cwd DIR] [--json]")
+	fmt.Fprintln(os.Stderr, "Usage: twig <command> [options]\nRun 'twig help' for details.")
+}
+
+func printHelp(w io.Writer) {
+	fmt.Fprint(w, `Twig adds interactive command suggestions to zsh.
+
+Usage:
+  twig enable [--shell]   Enable suggestions in future zsh sessions.
+                          With --shell, print code to enable this session too.
+  twig disable            Disable suggestions in future zsh sessions.
+  twig help               Show this help (also --help or -h).
+
+While typing:
+  Up / Down               Select a suggestion, or browse history when none is open.
+  Enter                   Insert the selected suggestion; otherwise run the command.
+  Esc                     Close suggestions.
+  Tab                     Use zsh's standard completion.
+
+Suggestions stay hidden after browsing history until you edit or move the cursor.
+
+Advanced:
+  twig complete --buffer TEXT --cursor N [--cwd DIR] [--json]
+                          Generate suggestions for shell integration.
+
+To enable suggestions in the current shell, run:
+  eval "$(twig enable --shell)"
+`)
 }
 
 func enable(emitShell bool) error {

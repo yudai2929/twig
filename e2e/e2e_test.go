@@ -185,6 +185,48 @@ func TestInteractiveCompletion(t *testing.T) {
 	}
 	waitOutputAfter(t, ctx, getOutput, start, "\x1b[?2004h")
 
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "git c"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "› checkout")
+	if _, err := io.WriteString(stdin, "\x1b"); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(600 * time.Millisecond)
+	if _, err := io.WriteString(stdin, "\r"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "git: 'c' is not a git command")
+	waitOutputAfter(t, ctx, getOutput, start, "\x1b[?2004h")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\x1b[A"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "git c")
+	time.Sleep(250 * time.Millisecond)
+	if strings.Contains(getOutput()[start:], "⚙ ›") {
+		t.Fatal("completion menu appeared immediately after recalling history")
+	}
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\x1b[B"); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(250 * time.Millisecond)
+	if strings.Contains(getOutput()[start:], "⚙ ›") {
+		t.Fatal("completion menu appeared immediately after moving forward in history")
+	}
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\x1b[A\x1b[D"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "⚙ ›")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\x03"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "\x1b[?2004h")
+
 	fileDir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(fileDir, "hello world.txt"), []byte("TWIG_FILE_CONTENT\n"), 0o600); err != nil {
 		t.Fatal(err)

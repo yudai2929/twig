@@ -136,6 +136,14 @@ func TestStandaloneBinaryEnable(t *testing.T) {
 		t.Fatalf("go install: %v\n%s", err, output)
 	}
 	binary := filepath.Join(binDir, "twig")
+	for _, args := range [][]string{nil, {"help"}, {"--help"}, {"-h"}} {
+		help := exec.Command(binary, args...)
+		help.Env = env
+		output, err := help.CombinedOutput()
+		if err != nil || !strings.Contains(string(output), "twig enable [--shell]") || !strings.Contains(string(output), "browse history") {
+			t.Fatalf("twig %v help: %v\n%s", args, err, output)
+		}
+	}
 	for range 2 {
 		enable := exec.Command(binary, "enable")
 		enable.Env = env
