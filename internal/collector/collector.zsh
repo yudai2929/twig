@@ -75,5 +75,5 @@ function twig_capture_widget() {
   zle -I
 }
 zle -N twig_capture_widget
-bindkey '^X^T' twig_capture_widget
+bindkey '^Xg' twig_capture_widget
 print -r -- TWIG_READY

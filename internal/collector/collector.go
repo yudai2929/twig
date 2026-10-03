@@ -110,7 +110,7 @@ func Collect(ctx context.Context, request Request) ([]completion.Candidate, erro
 	if err := waitFor(ctx, 2*time.Second, func() bool { return strings.Contains(getOutput(), "TWIG_READY") }); err != nil {
 		return nil, fmt.Errorf("collector did not initialize: %w; output: %s", err, getOutput())
 	}
-	if _, err := stdin.Write([]byte{0x18, 0x14}); err != nil {
+	if _, err := stdin.Write([]byte{0x18, 'g'}); err != nil {
 		return nil, err
 	}
 	if err := waitFor(ctx, 30*time.Second, func() bool { _, err := os.Stat(donePath); return err == nil }); err != nil {
