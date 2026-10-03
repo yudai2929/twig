@@ -34,7 +34,7 @@ func TestInteractiveCompletion(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "script", "-q", "/dev/null", "/bin/zsh", "-f", "-i")
-	cmd.Dir = root
+	cmd.Dir = t.TempDir()
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
