@@ -6,7 +6,7 @@ import (
 )
 
 func TestDecodeRecords(t *testing.T) {
-	input := []byte("git\x00commit\x00record changes\x00 \x00git\x00checkout\x00switch branch\x00 \x00")
+	input := []byte("git\x00commit\x00record changes\x00 \x00command\x00git\x00checkout\x00switch branch\x00 \x00command\x00")
 	got, err := DecodeRecords(input)
 	if err != nil {
 		t.Fatal(err)
@@ -14,7 +14,7 @@ func TestDecodeRecords(t *testing.T) {
 	if len(got) != 2 {
 		t.Fatalf("got %d candidates", len(got))
 	}
-	if got[0].Value != "commit" || got[0].Description != "record changes" || got[0].Suffix != " " {
+	if got[0].Value != "commit" || got[0].Description != "record changes" || got[0].Suffix != " " || got[0].Kind != "command" {
 		t.Fatalf("unexpected first candidate: %+v", got[0])
 	}
 }
@@ -43,8 +43,8 @@ func TestFilterPreservesOrderAndDescriptions(t *testing.T) {
 }
 
 func TestFormatProtocol(t *testing.T) {
-	got := EncodeRecords([]Candidate{{Group: "git", Value: "commit", Description: "record changes", Suffix: " "}})
-	want := []byte("git\x00commit\x00record changes\x00 \x00")
+	got := EncodeRecords([]Candidate{{Group: "git", Value: "commit", Description: "record changes", Suffix: " ", Kind: "command"}})
+	want := []byte("git\x00commit\x00record changes\x00 \x00command\x00")
 	if !bytes.Equal(got, want) {
 		t.Fatalf("got %q, want %q", got, want)
 	}

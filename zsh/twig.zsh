@@ -13,7 +13,7 @@ typeset -gi _twig_active=1
 typeset -gA _twig_previous_widgets
 typeset -ga _twig_bound_keys
 typeset -gA _twig_files _twig_revisions
-typeset -ga _twig_values _twig_descriptions _twig_suffixes
+typeset -ga _twig_values _twig_descriptions _twig_suffixes _twig_kinds
 typeset -gi _twig_revision=${_twig_revision:-0} _twig_index=1 _twig_suppressed=0 _twig_skip_next_space=0 _twig_last_cursor=-1
 (( _twig_revision++ ))
 typeset -g _twig_last_buffer=''
@@ -46,7 +46,7 @@ function _twig_draw() {
     fi
     return
   fi
-  local text='' i marker description
+  local text='' i marker description icon
   local first=$(( _twig_index > 8 ? _twig_index - 7 : 1 ))
   local last=$(( first + 7 < $#_twig_values ? first + 7 : $#_twig_values ))
   for (( i=first; i <= last; i++ )); do
@@ -54,7 +54,14 @@ function _twig_draw() {
     (( i == _twig_index )) && marker='› '
     description="${_twig_descriptions[i]}"
     [[ "$description" == *' -- '* ]] && description="${description#* -- }"
-    text+="${marker}${_twig_values[i]}"
+    case "${_twig_kinds[i]}" in
+      command) icon='⚙' ;;
+      flag) icon='⚑' ;;
+      file) icon='📄' ;;
+      directory) icon='📁' ;;
+      *) icon='•' ;;
+    esac
+    text+="${icon} ${marker}${_twig_values[i]}"
     [[ -n "$description" ]] && text+="  ${description}"
     (( i < last )) && text+=$'\n'
   done
@@ -81,17 +88,20 @@ function _twig_result_ready() {
   _twig_values=()
   _twig_descriptions=()
   _twig_suffixes=()
+  _twig_kinds=()
   _twig_index=1
   if [[ -s "$file" ]]; then
-    local result_fd group value description suffix
+    local result_fd group value description suffix kind
     exec {result_fd}< "$file"
     while IFS= read -r -d '' group <&$result_fd; do
       IFS= read -r -d '' value <&$result_fd || break
       IFS= read -r -d '' description <&$result_fd || break
       IFS= read -r -d '' suffix <&$result_fd || break
+      IFS= read -r -d '' kind <&$result_fd || break
       _twig_values+=("$value")
       _twig_descriptions+=("$description")
       _twig_suffixes+=("$suffix")
+      _twig_kinds+=("$kind")
     done
     exec {result_fd}<&-
   fi
@@ -126,6 +136,7 @@ function _twig_on_redraw() {
     _twig_values=()
     _twig_descriptions=()
     _twig_suffixes=()
+    _twig_kinds=()
     _twig_index=1
     _twig_draw
     return
@@ -134,17 +145,19 @@ function _twig_on_redraw() {
   local prefix="$REPLY" context="${LBUFFER[1,$(( ${#LBUFFER} - ${#REPLY} ))]}" i
   if (( $#_twig_values )) && [[ "$context" == "$_twig_context" && "$prefix" == "$_twig_prefix_cached"* ]]; then
     local old_count=$#_twig_values old_index=$_twig_index
-    local -a values descriptions suffixes
+    local -a values descriptions suffixes kinds
     for (( i=1; i <= $#_twig_values; i++ )); do
       if [[ "${_twig_values[i]}" == "$prefix"* ]]; then
         values+=("${_twig_values[i]}")
         descriptions+=("${_twig_descriptions[i]}")
         suffixes+=("${_twig_suffixes[i]}")
+        kinds+=("${_twig_kinds[i]}")
       fi
     done
     _twig_values=("${values[@]}")
     _twig_descriptions=("${descriptions[@]}")
     _twig_suffixes=("${suffixes[@]}")
+    _twig_kinds=("${kinds[@]}")
     _twig_index=1
     _twig_prefix_cached="$prefix"
     if (( $#_twig_values != old_count || old_index != 1 )); then
@@ -155,6 +168,7 @@ function _twig_on_redraw() {
     _twig_values=()
     _twig_descriptions=()
     _twig_suffixes=()
+    _twig_kinds=()
     _twig_index=1
     _twig_draw
   fi
@@ -182,6 +196,7 @@ function _twig_accept() {
   (( _twig_revision++ ))
   print -r -- "$_twig_revision" > "$_twig_generation_file"
   _twig_values=()
+  _twig_kinds=()
   _twig_draw
   _twig_last_buffer="$BUFFER"
   _twig_last_cursor=$CURSOR
@@ -224,6 +239,7 @@ function _twig_down() {
 
 function _twig_escape() {
   _twig_values=()
+  _twig_kinds=()
   _twig_suppressed=1
   (( _twig_revision++ ))
   print -r -- "$_twig_revision" > "$_twig_generation_file"
@@ -232,6 +248,7 @@ function _twig_escape() {
 
 function _twig_tab() {
   _twig_values=()
+  _twig_kinds=()
   _twig_suppressed=0
   _twig_skip_next_space=0
   (( _twig_revision++ ))
@@ -241,6 +258,7 @@ function _twig_tab() {
 
 function _twig_reset() {
   _twig_values=()
+  _twig_kinds=()
   _twig_suppressed=0
   _twig_skip_next_space=0
   _twig_last_buffer=''
@@ -275,7 +293,7 @@ zle -N _twig_up
 zle -N _twig_down
 zle -N _twig_escape
 zle -N _twig_tab
-_twig_bound_keys=('^M' ' ' '^Xj' '^Xk' '^[' '^I')
+_twig_bound_keys=('^M' ' ' '^Xj' '^Xk' '^[[A' '^[[B' '^[OA' '^[OB' '^[' '^I')
 typeset _twig_key _twig_binding
 for _twig_key in "${_twig_bound_keys[@]}"; do
   _twig_binding=$(bindkey -- "$_twig_key")
@@ -285,6 +303,10 @@ bindkey '^M' _twig_accept
 bindkey ' ' _twig_space
 bindkey '^Xk' _twig_up
 bindkey '^Xj' _twig_down
+bindkey '^[[A' _twig_up
+bindkey '^[[B' _twig_down
+bindkey '^[OA' _twig_up
+bindkey '^[OB' _twig_down
 bindkey '^[' _twig_escape
 bindkey '^I' _twig_tab
 add-zle-hook-widget line-pre-redraw _twig_on_redraw

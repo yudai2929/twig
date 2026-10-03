@@ -21,6 +21,8 @@ mise exec -- go vet ./...
 
 The `e2e` tests start interactive zsh through a macOS PTY. They check suggestion display, selection, execution, Tab, Space, file-name quoting, and suggestions after accepting a candidate.
 
+The README demo is recorded with [VHS](https://github.com/charmbracelet/vhs). Build `./bin/twig` first, then run `vhs docs/demo.tape` to regenerate the GIF and MP4 files.
+
 To inspect only the collector output:
 
 ```sh

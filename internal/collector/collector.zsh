@@ -40,7 +40,7 @@ function compadd() {
     _twig_captured_descriptions=( "${(@P)_twig_descriptions_name}" )
   fi
   for (( _twig_i=1; _twig_i <= $#_twig_captured_values; _twig_i++ )); do
-    printf '%s\0%s\0%s\0%s\0' "$_twig_group" "${_twig_captured_values[_twig_i]}" "${_twig_captured_descriptions[_twig_i]}" "$_twig_suffix" >> "$TWIG_RESULT_FILE"
+    printf '%s\0%s\0%s\0%s\0%s\0' "$_twig_group" "${_twig_captured_values[_twig_i]}" "${_twig_captured_descriptions[_twig_i]}" "$_twig_suffix" '' >> "$TWIG_RESULT_FILE"
   done
   return $_twig_result
 }
