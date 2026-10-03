@@ -68,13 +68,14 @@ func TestEnableDisableInNewZsh(t *testing.T) {
 	run("enable")
 	checkZsh("TWIG_BIN=" + resolvedBinary)
 	checkZsh("WIDGET=1")
-	bindings := exec.Command("/bin/zsh", "-ic", "bindkey '^[[A'; bindkey '^Xj'; bindkey '^Xk'")
+	bindings := exec.Command("/bin/zsh", "-ic", "bindkey '^[[A'; bindkey '^[[B'; bindkey '^[OA'; bindkey '^[OB'; bindkey '^Xj'; bindkey '^Xk'")
 	bindings.Env = env
 	if output, err := bindings.CombinedOutput(); err != nil ||
-		!strings.Contains(string(output), "up-line-or-history") ||
+		strings.Count(string(output), "_twig_up") != 3 ||
+		strings.Count(string(output), "_twig_down") != 3 ||
 		!strings.Contains(string(output), "_twig_down") ||
 		!strings.Contains(string(output), "_twig_up") {
-		t.Fatalf("history and completion bindings conflict: %v\n%s", err, output)
+		t.Fatalf("arrow and completion bindings are missing: %v\n%s", err, output)
 	}
 	reload := exec.Command("/bin/zsh", "-ic", "twig disable; twig enable; bindkey '^M'")
 	reload.Env = env

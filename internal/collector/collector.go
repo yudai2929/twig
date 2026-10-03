@@ -110,7 +110,7 @@ func Collect(ctx context.Context, request Request) ([]completion.Candidate, erro
 	if err := waitFor(ctx, 2*time.Second, func() bool { return strings.Contains(getOutput(), "TWIG_READY") }); err != nil {
 		return nil, fmt.Errorf("collector did not initialize: %w; output: %s", err, getOutput())
 	}
-	if _, err := stdin.Write([]byte{0x18, 0x14}); err != nil {
+	if _, err := stdin.Write([]byte{0x18, 'g'}); err != nil {
 		return nil, err
 	}
 	if err := waitFor(ctx, 30*time.Second, func() bool { _, err := os.Stat(donePath); return err == nil }); err != nil {
@@ -149,7 +149,46 @@ func Collect(ctx context.Context, request Request) ([]completion.Candidate, erro
 			}
 		}
 	}
+	wordStart := strings.LastIndexAny(beforeCursor, " \t\n") + 1
+	word := beforeCursor[wordStart:]
+	pathPrefix := ""
+	if slash := strings.LastIndexByte(word, '/'); slash >= 0 {
+		pathPrefix = word[:slash+1]
+	}
+	for i := range candidates {
+		candidates[i] = classifyCandidate(candidates[i], request.Dir, pathPrefix)
+	}
 	return candidates, nil
+}
+
+func classifyCandidate(candidate completion.Candidate, dir, pathPrefix string) completion.Candidate {
+	if strings.HasPrefix(candidate.Value, "-") || strings.HasSuffix(candidate.Group, " flags") {
+		candidate.Kind = "flag"
+		return candidate
+	}
+	if candidate.Group == "commands" || strings.HasSuffix(candidate.Group, " commands") {
+		candidate.Kind = "command"
+		return candidate
+	}
+	lowerGroup := strings.ToLower(candidate.Group)
+	pathCandidate := candidate.Description == "" || candidate.Description == candidate.Value || strings.Contains(lowerGroup, "file") || strings.Contains(lowerGroup, "dir")
+	if pathCandidate {
+		path := filepath.Join(dir, pathPrefix, candidate.Value)
+		if info, err := os.Stat(path); err == nil {
+			if info.IsDir() {
+				candidate.Kind = "directory"
+			} else {
+				candidate.Kind = "file"
+			}
+			return candidate
+		}
+	}
+	if candidate.Description != "" && candidate.Suffix == " " {
+		candidate.Kind = "command"
+	} else {
+		candidate.Kind = "value"
+	}
+	return candidate
 }
 
 func pathOnlyCandidates(candidates []completion.Candidate) bool {
@@ -216,7 +255,7 @@ func commandNames(prefix string) []completion.Candidate {
 	})
 	result := make([]completion.Candidate, 0, len(names))
 	for _, name := range names {
-		result = append(result, completion.Candidate{Group: "commands", Value: name, Suffix: " "})
+		result = append(result, completion.Candidate{Group: "commands", Value: name, Suffix: " ", Kind: "command"})
 	}
 	return result
 }

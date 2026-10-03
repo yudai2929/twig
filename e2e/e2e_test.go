@@ -82,16 +82,36 @@ func TestInteractiveCompletion(t *testing.T) {
 	if _, err := io.WriteString(stdin, "i"); err != nil {
 		t.Fatal(err)
 	}
-	waitOutput(t, ctx, getOutput, "› git")
+	waitOutput(t, ctx, getOutput, "⚙ › git")
 	start := len(getOutput())
 	if _, err := io.WriteString(stdin, "\r"); err != nil {
 		t.Fatal(err)
 	}
-	waitOutputAfter(t, ctx, getOutput, start, "› add")
+	waitOutputAfter(t, ctx, getOutput, start, "⚙ › add")
 	if _, err := io.WriteString(stdin, "c"); err != nil {
 		t.Fatal(err)
 	}
 	waitOutput(t, ctx, getOutput, "commit  record changes")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\x1b[B"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "› cherry-pick")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\x1bOA"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "› checkout")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\x1bOB"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "› cherry-pick")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\x1b[A"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "› checkout")
 	if _, err := io.WriteString(stdin, strings.Repeat("\x18j", 5)); err != nil {
 		t.Fatal(err)
 	}
@@ -131,6 +151,11 @@ func TestInteractiveCompletion(t *testing.T) {
 	}
 	waitOutputAfter(t, ctx, getOutput, start, "git")
 	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\x03"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "\x1b[?2004h")
+	start = len(getOutput())
 	if _, err := io.WriteString(stdin, "\x7f"); err != nil {
 		t.Fatal(err)
 	}
@@ -148,11 +173,7 @@ func TestInteractiveCompletion(t *testing.T) {
 		t.Fatal(err)
 	}
 	waitOutputAfter(t, ctx, getOutput, start, "TWIG_HISTORY\r\n")
-	start = len(getOutput())
-	if _, err := io.WriteString(stdin, "g"); err != nil {
-		t.Fatal(err)
-	}
-	waitOutputAfter(t, ctx, getOutput, start, "git")
+	waitOutputAfter(t, ctx, getOutput, start, "\x1b[?2004h")
 	start = len(getOutput())
 	if _, err := io.WriteString(stdin, "\x1b[A"); err != nil {
 		t.Fatal(err)
@@ -176,6 +197,7 @@ func TestInteractiveCompletion(t *testing.T) {
 		t.Fatal(err)
 	}
 	waitOutput(t, ctx, getOutput, "hello world.txt")
+	waitOutput(t, ctx, getOutput, "📄")
 	if _, err := io.WriteString(stdin, "\r"); err != nil {
 		t.Fatal(err)
 	}
@@ -218,6 +240,7 @@ func TestInteractiveCompletion(t *testing.T) {
 		t.Fatal(err)
 	}
 	waitOutputAfter(t, ctx, getOutput, start, "--all")
+	waitOutputAfter(t, ctx, getOutput, start, "⚑")
 
 	start = len(getOutput())
 	if _, err := io.WriteString(stdin, "\x03"); err != nil {

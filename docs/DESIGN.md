@@ -6,7 +6,7 @@ Twig runs in interactive zsh on macOS. ZLE handles input and display; the Go exe
 
 `zsh/twig.zsh` watches the editing buffer and cursor position and displays suggestions inside the terminal. Suggestion collection runs in a separate process so typing remains responsive while a request is in progress. A generation number discards results for older input. Twig avoids redrawing unchanged suggestions and filters existing results when it can.
 
-Enter inserts the selected suggestion or runs the command when no suggestions are open. Tab invokes zsh's standard completion. The up and down arrows remain available for command history; `Ctrl-X j` and `Ctrl-X k` move through suggestions.
+Enter inserts the selected suggestion or runs the command when no suggestions are open. Tab invokes zsh's standard completion. The up and down arrows move through suggestions while they are open and browse command history otherwise. `Ctrl-X j` and `Ctrl-X k` also move through suggestions. An icon before each candidate identifies commands, flags, files, directories, and other values.
 
 ## Collecting suggestions
 

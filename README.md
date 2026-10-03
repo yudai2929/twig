@@ -4,6 +4,10 @@
 
 Twig shows command completions as you type in zsh on macOS. Suggestions appear inside the terminal and can complete command names, subcommands, options, and file names.
 
+![Twig completing git commands](docs/demo.gif)
+
+[Watch the MP4 demo](docs/demo.mp4)
+
 ## Install
 
 ### Prebuilt binary with mise
@@ -30,12 +34,15 @@ eval "$(twig enable --shell)"
 
 Type `git c`, `go mod t`, or `codex ex` to see suggestions automatically.
 
+- `Down` / `Up`: Move through suggestions while they are open; otherwise browse command history
 - `Ctrl-X j` / `Ctrl-X k`: Move through suggestions
 - `Enter`: Insert the selected suggestion, or run the command when no suggestions are open
 - `Esc`: Close suggestions
 - `Tab`: Use zsh's standard completion
 
-After inserting a suggestion, Twig shows further suggestions when available. To run a command without selecting a suggestion, press `Esc` and then `Enter`. The up and down arrows keep their usual history behavior.
+After inserting a suggestion, Twig shows further suggestions when available. To run a command without selecting a suggestion, press `Esc` and then `Enter`.
+
+Suggestion icons show the kind of item: `⚙` command or subcommand, `⚑` flag, `📄` file, `📁` directory, and `•` other value.
 
 Set `TWIG_DISABLED_COMMANDS="kubectl,ssh"` to disable automatic suggestions for specific commands. Standard Tab completion remains available.
 

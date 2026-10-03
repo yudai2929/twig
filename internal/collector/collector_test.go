@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/yudai2929/twig/internal/completion"
 )
 
 func TestCollectGitSubcommands(t *testing.T) {
@@ -308,6 +310,32 @@ func TestCollectPathWithSpaces(t *testing.T) {
 		}
 	}
 	t.Fatalf("file missing from candidates: %+v", got)
+}
+
+func TestCandidateKinds(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "hello.txt"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(filepath.Join(dir, "hello-dir"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		candidate completion.Candidate
+		want      string
+	}{
+		{completion.Candidate{Group: "commands", Value: "git"}, "command"},
+		{completion.Candidate{Group: "-default-", Value: "commit", Description: "record changes", Suffix: " "}, "command"},
+		{completion.Candidate{Value: "--verbose"}, "flag"},
+		{completion.Candidate{Value: "hello.txt"}, "file"},
+		{completion.Candidate{Value: "hello-dir"}, "directory"},
+		{completion.Candidate{Value: "unknown"}, "value"},
+	} {
+		got := classifyCandidate(tc.candidate, dir, "")
+		if got.Kind != tc.want {
+			t.Errorf("%q: got %q, want %q", tc.candidate.Value, got.Kind, tc.want)
+		}
+	}
 }
 
 func TestCursorUsesCharacters(t *testing.T) {
