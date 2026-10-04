@@ -32,6 +32,14 @@ function _twig_prefix() {
   REPLY="${LBUFFER#$left}"
 }
 
+function _twig_word() {
+  local left="$LBUFFER"
+  while [[ -n "$left" && "${left[-1]}" != ' ' && "${left[-1]}" != $'\t' && "${left[-1]}" != $'\n' ]]; do
+    left="${left[1,-2]}"
+  done
+  REPLY="${LBUFFER#$left}"
+}
+
 function _twig_exact_command() {
   [[ -n "$BUFFER" && "$BUFFER" == "$LBUFFER" && "$BUFFER" != *[[:space:]]* ]] && (( $+commands[$BUFFER] ))
 }
@@ -143,11 +151,13 @@ function _twig_on_redraw() {
   fi
   _twig_prefix
   local prefix="$REPLY" context="${LBUFFER[1,$(( ${#LBUFFER} - ${#REPLY} ))]}" i
+  _twig_word
+  local word="$REPLY"
   if (( $#_twig_values )) && [[ "$context" == "$_twig_context" && "$prefix" == "$_twig_prefix_cached"* ]]; then
     local old_count=$#_twig_values old_index=$_twig_index
     local -a values descriptions suffixes kinds
     for (( i=1; i <= $#_twig_values; i++ )); do
-      if [[ "${_twig_values[i]}" == "$prefix"* ]]; then
+      if [[ "${_twig_values[i]}" == "$prefix"* || "${_twig_values[i]}" == "$word"* ]]; then
         values+=("${_twig_values[i]}")
         descriptions+=("${_twig_descriptions[i]}")
         suffixes+=("${_twig_suffixes[i]}")
@@ -186,6 +196,8 @@ function _twig_accept() {
   fi
   _twig_prefix
   local prefix="$REPLY" value="${_twig_values[_twig_index]}" suffix="${_twig_suffixes[_twig_index]}"
+  _twig_word
+  [[ "$value" == "$REPLY"* ]] && prefix="$REPLY"
   local keep=$(( ${#LBUFFER} - ${#prefix} ))
   local left="${LBUFFER[1,$keep]}"
   local advance=0

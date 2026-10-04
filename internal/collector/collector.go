@@ -127,7 +127,7 @@ func Collect(ctx context.Context, request Request) ([]completion.Candidate, erro
 	if err != nil {
 		return nil, err
 	}
-	candidates = completion.Filter(candidates, currentPrefix(request.Buffer[:cursorByte]))
+	candidates = completion.Filter(candidates, currentPrefix(beforeCursor), currentWord(beforeCursor))
 	for i := range candidates {
 		if candidates[i].Suffix == "" && !strings.HasPrefix(candidates[i].Value, "-") &&
 			(strings.Contains(candidates[i].Description, " -- ") || (candidates[i].Group == "" && candidates[i].Description == candidates[i].Value)) {
@@ -298,4 +298,8 @@ func currentPrefix(buffer string) string {
 		end--
 	}
 	return buffer[end:]
+}
+
+func currentWord(buffer string) string {
+	return buffer[strings.LastIndexAny(buffer, " \t\n")+1:]
 }

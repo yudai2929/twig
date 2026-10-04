@@ -33,6 +33,43 @@ func TestCollectGitSubcommands(t *testing.T) {
 	}
 }
 
+func TestCollectGitCheckoutTracksBranches(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git is not installed")
+	}
+	dir := t.TempDir()
+	runGit := func(args ...string) {
+		t.Helper()
+		command := exec.Command("git", args...)
+		command.Dir = dir
+		command.Env = append(os.Environ(), "GIT_AUTHOR_NAME=Twig", "GIT_AUTHOR_EMAIL=twig@example.invalid", "GIT_COMMITTER_NAME=Twig", "GIT_COMMITTER_EMAIL=twig@example.invalid")
+		if output, err := command.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, output)
+		}
+	}
+	runGit("init", "-q")
+	runGit("commit", "--allow-empty", "-qm", "initial")
+	runGit("branch", "feature/one")
+	collect := func(buffer, want string) {
+		t.Helper()
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		got, err := Collect(ctx, Request{Buffer: buffer, Cursor: len(buffer), Dir: dir})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, candidate := range got {
+			if candidate.Value == want {
+				return
+			}
+		}
+		t.Fatalf("%q missing from %q suggestions: %+v", want, buffer, got)
+	}
+	collect("git checkout fe", "feature/one")
+	runGit("branch", "feature/two")
+	collect("git checkout feature/t", "feature/two")
+}
+
 func TestCollectCommandNames(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -291,6 +328,35 @@ func TestCollectFromCustomFpath(t *testing.T) {
 		}
 	}
 	t.Fatalf("custom completion missing: %+v", got)
+}
+
+func TestCollectArrayAfterCompaddSeparator(t *testing.T) {
+	dir := t.TempDir()
+	completion := "#compdef twigtest\nlocal -a values\nvalues=(feature/one feature/two)\ncompadd -a - values\n"
+	if err := os.WriteFile(filepath.Join(dir, "_twigtest"), []byte(completion), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "twigtest"), []byte("#!/bin/sh\nexit 0\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	base, err := exec.Command("zsh", "-fc", "print -r -- ${(j.:.)fpath}").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("FPATH", dir+":"+strings.TrimSpace(string(base)))
+	t.Setenv("PATH", dir+":"+os.Getenv("PATH"))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	got, err := Collect(ctx, Request{Buffer: "twigtest fe", Cursor: len("twigtest fe"), Dir: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, candidate := range got {
+		if candidate.Value == "feature/one" {
+			return
+		}
+	}
+	t.Fatalf("array completion missing after compadd separator: %+v", got)
 }
 
 func TestCollectPathWithSpaces(t *testing.T) {
