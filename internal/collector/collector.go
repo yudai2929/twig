@@ -118,7 +118,7 @@ func Collect(ctx context.Context, request Request) ([]completion.Candidate, erro
 	}
 	data, err := os.ReadFile(resultPath)
 	if os.IsNotExist(err) {
-		return helpCandidates(ctx, beforeCursor, request.Dir), nil
+		return classifyCandidates(helpCandidates(ctx, beforeCursor, request.Dir), beforeCursor, request.Dir), nil
 	}
 	if err != nil {
 		return nil, err
@@ -149,6 +149,10 @@ func Collect(ctx context.Context, request Request) ([]completion.Candidate, erro
 			}
 		}
 	}
+	return classifyCandidates(candidates, beforeCursor, request.Dir), nil
+}
+
+func classifyCandidates(candidates []completion.Candidate, beforeCursor, dir string) []completion.Candidate {
 	wordStart := strings.LastIndexAny(beforeCursor, " \t\n") + 1
 	word := beforeCursor[wordStart:]
 	pathPrefix := ""
@@ -156,9 +160,9 @@ func Collect(ctx context.Context, request Request) ([]completion.Candidate, erro
 		pathPrefix = word[:slash+1]
 	}
 	for i := range candidates {
-		candidates[i] = classifyCandidate(candidates[i], request.Dir, pathPrefix)
+		candidates[i] = classifyCandidate(candidates[i], dir, pathPrefix)
 	}
-	return candidates, nil
+	return candidates
 }
 
 func classifyCandidate(candidate completion.Candidate, dir, pathPrefix string) completion.Candidate {

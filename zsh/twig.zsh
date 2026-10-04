@@ -195,16 +195,17 @@ function _twig_accept() {
     return
   fi
   _twig_prefix
-  local prefix="$REPLY" value="${_twig_values[_twig_index]}" suffix="${_twig_suffixes[_twig_index]}"
+  local prefix="$REPLY" value="${_twig_values[_twig_index]}" suffix="${_twig_suffixes[_twig_index]}" kind="${_twig_kinds[_twig_index]}"
   _twig_word
   [[ "$value" == "$REPLY"* ]] && prefix="$REPLY"
   local keep=$(( ${#LBUFFER} - ${#prefix} ))
   local left="${LBUFFER[1,$keep]}"
   local advance=0
-  [[ -z "$RBUFFER" && "$suffix" == ' ' ]] && advance=1
+  [[ -z "$RBUFFER" && "$suffix" == ' ' && "$kind" == command ]] && advance=1
   LBUFFER="${left}${(q)value}${suffix}"
   _twig_suppressed=$(( ! advance ))
-  _twig_skip_next_space=$advance
+  _twig_skip_next_space=0
+  [[ "$suffix" == ' ' ]] && _twig_skip_next_space=1
   (( _twig_revision++ ))
   print -r -- "$_twig_revision" > "$_twig_generation_file"
   _twig_values=()
@@ -219,6 +220,10 @@ function _twig_accept() {
 function _twig_space() {
   if (( _twig_skip_next_space )) && [[ "${LBUFFER[-1]}" == ' ' ]]; then
     _twig_skip_next_space=0
+    if (( _twig_suppressed )); then
+      _twig_last_buffer=''
+      _twig_on_redraw
+    fi
     return
   fi
   if (( _twig_suppressed )); then
