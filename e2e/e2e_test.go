@@ -443,6 +443,32 @@ func TestInteractiveCompletion(t *testing.T) {
 	if strings.Contains(getOutput()[start:], "git checkout feature/feature/two") {
 		t.Fatal("branch prefix was duplicated when inserting a suggestion")
 	}
+
+	completionDir := t.TempDir()
+	literalGitCompletion := "#compdef git\nlocal -a branches\nbranches=( ${(f)\"$(git for-each-ref --format='%(refname:short)' refs/heads)\"} )\ncompadd -Q -S ' ' -- \"${branches[@]}\"\n"
+	if err := os.WriteFile(filepath.Join(completionDir, "_git"), []byte(literalGitCompletion), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\x03"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "\x1b[?2004h")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "fpath=("+shellQuote(completionDir)+" $fpath); print -r -- TWIG_LITERAL_READY\r"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "TWIG_LITERAL_READY\r\n")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "git checkout feature/t"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "feature/two")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\r"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "git checkout feature/two")
 }
 
 func waitOutput(t *testing.T, ctx context.Context, output func() string, want string) {
