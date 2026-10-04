@@ -33,6 +33,7 @@ eval "$(twig enable --shell)"
 ## 使い方
 
 `git c`、`go mod t`、`codex ex` などを入力すると、候補が自動で表示されます。
+Git リポジトリ内では `git checkout fe` や `git switch fe` から、現在のブランチに合う候補を表示します。
 コマンドとキー操作の一覧は `twig help` で確認できます。
 
 - `↓` / `↑`: 候補表示中は候補を移動し、それ以外は履歴をたどる

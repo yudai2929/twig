@@ -390,6 +390,59 @@ func TestInteractiveCompletion(t *testing.T) {
 		}
 		waitOutputAfter(t, ctx, getOutput, start, "› exec")
 	}
+
+	gitDir := t.TempDir()
+	runGit := func(args ...string) {
+		t.Helper()
+		command := exec.Command("git", args...)
+		command.Dir = gitDir
+		command.Env = append(os.Environ(), "GIT_AUTHOR_NAME=Twig", "GIT_AUTHOR_EMAIL=twig@example.invalid", "GIT_COMMITTER_NAME=Twig", "GIT_COMMITTER_EMAIL=twig@example.invalid")
+		if output, err := command.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, output)
+		}
+	}
+	runGit("init", "-q")
+	runGit("commit", "--allow-empty", "-qm", "initial")
+	runGit("branch", "feature/one")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\x03"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "\x1b[?2004h")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "cd "+shellQuote(gitDir)+"; print -r -- TWIG_BRANCH_READY\r"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "TWIG_BRANCH_READY\r\n")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "git checkout fe"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "feature/one")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\r"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "git checkout feature/one")
+	runGit("branch", "feature/two")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\x03"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "\x1b[?2004h")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "git checkout feature/t"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "feature/two")
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\r"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "git checkout feature/two")
+	if strings.Contains(getOutput()[start:], "git checkout feature/feature/two") {
+		t.Fatal("branch prefix was duplicated when inserting a suggestion")
+	}
 }
 
 func waitOutput(t *testing.T, ctx context.Context, output func() string, want string) {

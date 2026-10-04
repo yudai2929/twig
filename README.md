@@ -33,6 +33,7 @@ eval "$(twig enable --shell)"
 ## Use
 
 Type `git c`, `go mod t`, or `codex ex` to see suggestions automatically.
+Inside a Git repository, `git checkout fe` and `git switch fe` suggest matching branches as they change.
 Run `twig help` to see commands and keyboard controls.
 
 - `Down` / `Up`: Move through suggestions while they are open; otherwise browse command history

@@ -50,11 +50,15 @@ func EncodeRecords(candidates []Candidate) []byte {
 	return buf.Bytes()
 }
 
-func Filter(candidates []Candidate, prefix string) []Candidate {
+func Filter(candidates []Candidate, prefix string, alternatePrefixes ...string) []Candidate {
 	out := make([]Candidate, 0, len(candidates))
 	seen := make(map[string]int)
 	for _, candidate := range candidates {
-		if !strings.HasPrefix(candidate.Value, prefix) {
+		matches := strings.HasPrefix(candidate.Value, prefix)
+		for _, alternate := range alternatePrefixes {
+			matches = matches || strings.HasPrefix(candidate.Value, alternate)
+		}
+		if !matches {
 			continue
 		}
 		if index, exists := seen[candidate.Value]; exists {

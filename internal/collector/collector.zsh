@@ -8,12 +8,21 @@ RPROMPT=''
 function compadd() {
   local -a _twig_args _twig_captured_values _twig_captured_descriptions
   _twig_args=("$@")
-  local _twig_group='' _twig_values_name='' _twig_descriptions_name='' _twig_suffix=''
-  local _twig_i=1
+  local -a _twig_values_names
+  local _twig_group='' _twig_descriptions_name='' _twig_suffix=''
+  local _twig_i=1 _twig_array_mode=0 _twig_after_separator=0
   while (( _twig_i <= $#_twig_args )); do
+    if (( _twig_after_separator )); then
+      (( _twig_array_mode )) && _twig_values_names+=("${_twig_args[_twig_i]}")
+      (( _twig_i++ ))
+      continue
+    fi
     case "${_twig_args[_twig_i]}" in
-      -a|-A|-O)
-        if [[ "${_twig_args[_twig_i]}" == -a ]]; then _twig_values_name="${_twig_args[_twig_i+1]}"; fi
+      -a)
+        _twig_array_mode=1
+        (( _twig_i++ ))
+        ;;
+      -A|-O|-D|-F|-M|-P|-p|-i|-I|-W|-X|-x|-r|-R|-E)
         (( _twig_i += 2 ))
         ;;
       -d|-ld)
@@ -28,14 +37,28 @@ function compadd() {
         _twig_suffix="${_twig_args[_twig_i+1]}"
         (( _twig_i += 2 ))
         ;;
-      *) (( _twig_i++ )) ;;
+      -|--)
+        _twig_after_separator=1
+        (( _twig_i++ ))
+        ;;
+      -*)
+        [[ "${_twig_args[_twig_i]}" == *a* ]] && _twig_array_mode=1
+        (( _twig_i++ ))
+        ;;
+      *)
+        (( _twig_array_mode )) && _twig_values_names+=("${_twig_args[_twig_i]}")
+        (( _twig_i++ ))
+        ;;
     esac
   done
 
   builtin compadd "$@"
   local _twig_result=$?
-  [[ -n "$_twig_values_name" ]] || return $_twig_result
-  _twig_captured_values=( "${(@P)_twig_values_name}" )
+  (( $#_twig_values_names )) || return $_twig_result
+  local _twig_values_name
+  for _twig_values_name in "${_twig_values_names[@]}"; do
+    _twig_captured_values+=( "${(@P)_twig_values_name}" )
+  done
   if [[ -n "$_twig_descriptions_name" ]]; then
     _twig_captured_descriptions=( "${(@P)_twig_descriptions_name}" )
   fi
