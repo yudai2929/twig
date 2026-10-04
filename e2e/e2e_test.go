@@ -469,6 +469,12 @@ func TestInteractiveCompletion(t *testing.T) {
 		t.Fatal(err)
 	}
 	waitOutputAfter(t, ctx, getOutput, start, "git checkout feature/two")
+	time.Sleep(500 * time.Millisecond)
+	start = len(getOutput())
+	if _, err := io.WriteString(stdin, "\r"); err != nil {
+		t.Fatal(err)
+	}
+	waitOutputAfter(t, ctx, getOutput, start, "Switched to branch 'feature/two'")
 }
 
 func waitOutput(t *testing.T, ctx context.Context, output func() string, want string) {
