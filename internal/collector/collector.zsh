@@ -8,12 +8,12 @@ RPROMPT=''
 function compadd() {
   local -a _twig_args _twig_captured_values _twig_captured_descriptions
   _twig_args=("$@")
-  local -a _twig_values_names
+  local -a _twig_sources
   local _twig_group='' _twig_descriptions_name='' _twig_suffix=''
   local _twig_i=1 _twig_array_mode=0 _twig_after_separator=0
   while (( _twig_i <= $#_twig_args )); do
     if (( _twig_after_separator )); then
-      (( _twig_array_mode )) && _twig_values_names+=("${_twig_args[_twig_i]}")
+      _twig_sources+=("${_twig_args[_twig_i]}")
       (( _twig_i++ ))
       continue
     fi
@@ -22,7 +22,7 @@ function compadd() {
         _twig_array_mode=1
         (( _twig_i++ ))
         ;;
-      -A|-O|-D|-F|-M|-P|-p|-i|-I|-W|-X|-x|-r|-R|-E)
+      -A|-O|-D|-F|-M|-P|-p|-i|-I|-W|-X|-x|-r|-R|-E|-o)
         (( _twig_i += 2 ))
         ;;
       -d|-ld)
@@ -46,7 +46,7 @@ function compadd() {
         (( _twig_i++ ))
         ;;
       *)
-        (( _twig_array_mode )) && _twig_values_names+=("${_twig_args[_twig_i]}")
+        _twig_sources+=("${_twig_args[_twig_i]}")
         (( _twig_i++ ))
         ;;
     esac
@@ -54,16 +54,27 @@ function compadd() {
 
   builtin compadd "$@"
   local _twig_result=$?
-  (( $#_twig_values_names )) || return $_twig_result
-  local _twig_values_name
-  for _twig_values_name in "${_twig_values_names[@]}"; do
-    _twig_captured_values+=( "${(@P)_twig_values_name}" )
-  done
+  (( $#_twig_sources )) || return $_twig_result
+  if (( _twig_array_mode )); then
+    local _twig_values_name
+    for _twig_values_name in "${_twig_sources[@]}"; do
+      _twig_captured_values+=( "${(@P)_twig_values_name}" )
+    done
+  else
+    _twig_captured_values=("${_twig_sources[@]}")
+  fi
   if [[ -n "$_twig_descriptions_name" ]]; then
     _twig_captured_descriptions=( "${(@P)_twig_descriptions_name}" )
   fi
+  local _twig_value _twig_value_suffix
   for (( _twig_i=1; _twig_i <= $#_twig_captured_values; _twig_i++ )); do
-    printf '%s\0%s\0%s\0%s\0%s\0' "$_twig_group" "${_twig_captured_values[_twig_i]}" "${_twig_captured_descriptions[_twig_i]}" "$_twig_suffix" '' >> "$TWIG_RESULT_FILE"
+    _twig_value="${_twig_captured_values[_twig_i]}"
+    _twig_value_suffix="$_twig_suffix"
+    if [[ "$_twig_value" == *' ' ]]; then
+      _twig_value="${_twig_value[1,-2]}"
+      [[ -n "$_twig_value_suffix" ]] || _twig_value_suffix=' '
+    fi
+    printf '%s\0%s\0%s\0%s\0%s\0' "$_twig_group" "$_twig_value" "${_twig_captured_descriptions[_twig_i]}" "$_twig_value_suffix" '' >> "$TWIG_RESULT_FILE"
   done
   return $_twig_result
 }

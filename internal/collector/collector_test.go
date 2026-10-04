@@ -359,6 +359,32 @@ func TestCollectArrayAfterCompaddSeparator(t *testing.T) {
 	t.Fatalf("array completion missing after compadd separator: %+v", got)
 }
 
+func TestCollectLiteralCompaddValues(t *testing.T) {
+	dir := t.TempDir()
+	completion := "#compdef twigliteral\ncompadd -Q -o nosort -S '' -- 'feature/one ' 'feature/two '\n"
+	if err := os.WriteFile(filepath.Join(dir, "_twigliteral"), []byte(completion), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "twigliteral"), []byte("#!/bin/sh\nexit 0\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	base, err := exec.Command("zsh", "-fc", "print -r -- ${(j.:.)fpath}").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("FPATH", dir+":"+strings.TrimSpace(string(base)))
+	t.Setenv("PATH", dir+":"+os.Getenv("PATH"))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	got, err := Collect(ctx, Request{Buffer: "twigliteral fe", Cursor: len("twigliteral fe"), Dir: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 || got[0].Value != "feature/one" || got[0].Suffix != " " || got[1].Value != "feature/two" || got[1].Suffix != " " {
+		t.Fatalf("literal zsh candidates missing or reordered: %+v", got)
+	}
+}
+
 func TestCollectPathWithSpaces(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "hello world.txt"), nil, 0o600); err != nil {
